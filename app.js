@@ -16,7 +16,7 @@ const taskSchema = new mongoose.Schema({
 
 const listSchema = new mongoose.Schema({
   name: String,
-  lsit: [taskSchema]
+  task_list: [taskSchema]
 })
 
 const task = new mongoose.model("task", taskSchema)
@@ -26,25 +26,56 @@ app.listen(3000, ()=>{
 })
 
 // var task_array = [];
-
+var today = date.getDate();
 app.get("/", (req, res)=>{
-  var today = date.getDate();
   task.find().then((data)=>{
     res.render("list", {listTitle: today , task_array: data})
   })
 })
 
 app.post("/", (req, res)=>{
-    var temp_task = new task({
-    name: req.body.new_task
+  const new_task = req.body.new_task
+  const new_list = req.body.list;
+  var temp_task = new task({
+    name: new_task
   })
-  temp_task.save()
-  // task_array.push(temp_task)
-  res.redirect("/")
+  if(new_list === today){
+    temp_task.save()
+    // task_array.push(temp_task)
+    res.redirect("/")
+  }
+  else{
+    list.findOne({name: new_list}).then((data)=>{
+      data.task_list.push(new_task)
+      // data.save();
+      console.log("new list tasks" + data.task_list);
+      res.redirect("/" + new_list)
+    })
+  }
+
 })
 
 app.get("/:customListName", (req, res)=>{
   const customListName = req.params.customListName
+  list.findOne({name: customListName}).then((data)=>{
+    if(!data){
+      console.log("does not exist");
+      //console.log(data);
+      const temp_list = new list({
+        name: customListName,
+        task_list: []
+      })
+      temp_list.save()
+      res.redirect("/" + customListName)
+    }
+    else{
+      //console.log(data);
+      //console.log(data.name);
+      //console.log(data.task_list);
+      console.log("exist");
+       res.render("list", {listTitle: data.name , task_array: data.task_list})
+    }
+  })
 })
 
 app.post("/delete", (req, res)=>{
