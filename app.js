@@ -9,7 +9,7 @@ app.set("view engine", "ejs")
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(express.static("public"))
 
-mongoose.connect("mongodb://127.0.0.1:27017/todolist_DB", {useNewUrlParser: true})
+mongoose.connect("mongodb+srv://kshitij:47Jsg8RZbuVn3kMT@cluster1.dusm76j.mongodb.net/todolist_DB", {useNewUrlParser: true})
 
 const taskSchema = new mongoose.Schema({
   name: String
