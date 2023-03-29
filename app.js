@@ -2,6 +2,7 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const mongoose = require("mongoose")
 const date = require(__dirname + "/date.js")
+const _ = require("lodash")
 const app = express()
 
 app.set("view engine", "ejs")
@@ -26,7 +27,7 @@ app.listen(3000, ()=>{
 })
 
 // var task_array = [];
-var today = date.getDate();
+const today = "Today"
 app.get("/", (req, res)=>{
   task.find().then((data)=>{
     res.render("list", {listTitle: today , task_array: data})
@@ -41,14 +42,14 @@ app.post("/", (req, res)=>{
   })
   if(new_list === today){
     temp_task.save()
-    // task_array.push(temp_task)
     res.redirect("/")
   }
   else{
     list.findOne({name: new_list}).then((data)=>{
-      data.task_list.push(new_task)
-      // data.save();
-      console.log("new list tasks" + data.task_list);
+      data.task_list.push(temp_task)
+      data.save()
+      console.log(data);
+      console.log("new list tasks" + data.task_list.name);
       res.redirect("/" + new_list)
     })
   }
@@ -56,7 +57,7 @@ app.post("/", (req, res)=>{
 })
 
 app.get("/:customListName", (req, res)=>{
-  const customListName = req.params.customListName
+  const customListName = _.capitalize(req.params.customListName)
   list.findOne({name: customListName}).then((data)=>{
     if(!data){
       console.log("does not exist");
@@ -80,9 +81,20 @@ app.get("/:customListName", (req, res)=>{
 
 app.post("/delete", (req, res)=>{
   var delete_task = req.body.to_delete
-  task.findByIdAndRemove(delete_task).then((data)=>{
-    console.log(data);
-    console.log("task deleted successfully");
-  })
-  res.redirect("/")
+  var listName = req.body.list
+  if(listName === today){
+    task.findByIdAndRemove(delete_task).then((data)=>{
+      console.log(data);
+      console.log("task deleted successfully");
+      res.redirect("/")
+    })
+  }
+  else{
+    list.findOneAndUpdate({name: listName}, {$pull: {task_list: {_id: delete_task}}}).then((data)=>{
+      console.log("task deleted successfully");
+      res.redirect("/" + listName)
+    }).catch((err)=>{
+      console.log(err);
+    })
+  }
 })
